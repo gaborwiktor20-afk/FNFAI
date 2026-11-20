@@ -1,0 +1,1900 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <title>Mini FNF / osu!mania</title>
+    <style>
+        body {
+            background-color: #121218;
+            color: white;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+            user-select: none;
+        }
+        #hud {
+            display: flex;
+            gap: 20px;
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 12px;
+            background: #1e1e2a;
+            padding: 10px 20px;
+            border-radius: 8px;
+            border: 2px solid #3f3f5a;
+        }
+        #game-wrapper {
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        #keybinds-panel {
+            position: absolute;
+            right: 365px;
+            top: 0;
+            background: #1e1e2a;
+            border: 3px solid #3f3f5a;
+            border-radius: 10px;
+            padding: 16px 20px;
+            width: 175px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.6);
+        }
+        #keybinds-panel h3, #speed-panel h3 {
+            margin: 0 0 10px 0;
+            font-size: 15px;
+            text-align: center;
+            color: #00ffff;
+            letter-spacing: 1px;
+            border-bottom: 1px solid #3f3f5a;
+            padding-bottom: 6px;
+        }
+        .kb-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            font-size: 15px;
+        }
+        .kb-arrow {
+            font-weight: bold;
+            font-size: 20px;
+            width: 24px;
+            text-align: center;
+        }
+        .kb-keys {
+            background: #2d2d3d;
+            padding: 4px 8px;
+            border-radius: 5px;
+            font-family: monospace;
+            font-weight: bold;
+            color: #eee;
+            border: 1px solid #555;
+        }
+        .kb-space {
+            margin-top: 14px;
+            padding-top: 10px;
+            border-top: 1px solid #3f3f5a;
+            text-align: center;
+            font-size: 13px;
+            color: #aaa;
+        }
+        .kb-space span {
+            display: inline-block;
+            margin-top: 4px;
+            background: #2d2d3d;
+            color: #12fa05;
+            padding: 4px 12px;
+            border-radius: 5px;
+            font-weight: bold;
+            border: 1px solid #12fa05;
+        }
+
+        #hitbox-status-panel {
+            display: none;
+            position: absolute;
+            right: 365px;
+            top: 382px;
+            width: 175px;
+            background: rgba(18, 250, 5, 0.12);
+            border: 2px solid #12fa05;
+            border-radius: 10px;
+            padding: 12px 16px;
+            text-align: center;
+            box-shadow: 0 0 18px rgba(18, 250, 5, 0.28);
+            box-sizing: border-box;
+        }
+        .hitbox-status-title {
+            font-size: 13px;
+            font-weight: 900;
+            color: #12fa05;
+            letter-spacing: 0.6px;
+            line-height: 1.35;
+        }
+        .hitbox-status-sub {
+            margin-top: 4px;
+            font-size: 11px;
+            font-weight: bold;
+            color: #d9ffe0;
+        }
+
+        #speed-panel {
+            position: absolute;
+            left: 365px;
+            top: 0;
+            background: #1e1e2a;
+            border: 3px solid #3f3f5a;
+            border-radius: 10px;
+            padding: 14px 18px;
+            width: 190px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.6);
+            text-align: center;
+        }
+        .speed-controls {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            margin: 6px 0;
+        }
+        .speed-btn {
+            width: 30px;
+            height: 30px;
+            padding: 0;
+            margin: 0;
+            font-size: 18px;
+            background: #2d2d3d;
+            color: white;
+            border: 1px solid #555;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+        .speed-btn:hover:not(:disabled) { background: #3f3f5a; }
+        .speed-btn:disabled, #speed-slider:disabled, #max-miss-slider:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+        #speed-display, #max-miss-display {
+            font-size: 22px;
+            font-weight: 900;
+            color: #12fa05;
+            min-width: 38px;
+        }
+        #max-miss-display {
+            color: #ff2a55;
+            display: block;
+            margin: 4px 0;
+        }
+        input[type="range"] {
+            width: 100%;
+            cursor: pointer;
+            accent-color: #12fa05;
+        }
+        #max-miss-slider {
+            accent-color: #ff2a55;
+        }
+        .speed-range-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 11px;
+            color: #888;
+            margin-top: 3px;
+        }
+        #speed-lock-notice {
+            display: none;
+            margin-top: 8px;
+            font-size: 11px;
+            font-weight: bold;
+            color: #ff80bf;
+            background: rgba(255, 0, 127, 0.15);
+            border: 1px solid #ff007f;
+            border-radius: 5px;
+            padding: 4px 6px;
+        }
+        #speed-lock-notice.unlocked {
+            color: #12fa05;
+            background: rgba(18, 250, 5, 0.15);
+            border-color: #12fa05;
+        }
+
+        #bot-box {
+            display: none;
+            margin-top: 12px;
+            padding-top: 10px;
+            border-top: 1px solid #3f3f5a;
+        }
+        #bot-toggle-btn {
+            width: 100%;
+            padding: 8px 10px;
+            font-size: 13px;
+            font-weight: bold;
+            border-radius: 6px;
+            border: 2px solid #555;
+            background: #2d2d3d;
+            color: #ccc;
+            cursor: pointer;
+            transition: all 0.12s;
+        }
+        #bot-toggle-btn.bot-on {
+            border-color: #00ffff;
+            color: #00ffff;
+            background: rgba(0, 255, 255, 0.16);
+            box-shadow: 0 0 12px rgba(0, 255, 255, 0.45);
+        }
+        .bot-hint {
+            margin-top: 5px;
+            font-size: 11px;
+            color: #9aa0bd;
+        }
+
+        .diff-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px;
+            margin-top: 6px;
+        }
+        .diff-btn {
+            padding: 7px 5px;
+            font-size: 12px;
+            font-weight: bold;
+            border-radius: 6px;
+            border: 2px solid #555;
+            background: #2d2d3d;
+            color: #ddd;
+            cursor: pointer;
+            transition: transform 0.05s, border-color 0.1s;
+        }
+        .diff-btn:hover { transform: scale(1.03); }
+        .diff-btn.active[data-diff="easy"] { border-color: #12fa05; color: #12fa05; background: rgba(18, 250, 5, 0.15); }
+        .diff-btn.active[data-diff="normal"] { border-color: #00ffff; color: #00ffff; background: rgba(0, 255, 255, 0.15); }
+        .diff-btn.active[data-diff="hard"] { border-color: #f1c40f; color: #f1c40f; background: rgba(241, 196, 15, 0.15); }
+        .diff-btn.active[data-diff="nightmare"] { border-color: #ff2a55; color: #ff2a55; background: rgba(255, 42, 85, 0.18); box-shadow: 0 0 10px rgba(255, 42, 85, 0.4); }
+        .diff-btn[data-diff="impossible"] {
+            grid-column: 1 / -1;
+            border-color: #a855f7;
+            color: #e9d5ff;
+            background: rgba(168, 85, 247, 0.15);
+            letter-spacing: 1px;
+        }
+        .diff-btn.active[data-diff="impossible"] {
+            border-color: #ff007f;
+            color: #ff80bf;
+            background: rgba(255, 0, 127, 0.25);
+            box-shadow: 0 0 14px rgba(255, 0, 127, 0.65);
+        }
+
+        #unlock-toast {
+            position: fixed;
+            top: 16px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #241038;
+            border: 2px solid #ff007f;
+            color: #ff80bf;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 15px;
+            text-align: center;
+            line-height: 1.4;
+            z-index: 60;
+            box-shadow: 0 0 25px rgba(255, 0, 127, 0.6);
+            display: none;
+        }
+
+        #game-container {
+            position: relative;
+            width: 340px;
+            height: 550px;
+            background-color: #1e1e2a;
+            border: 4px solid #3f3f5a;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 0 25px rgba(0, 0, 0, 0.8);
+        }
+        #game-container.game-entering {
+            animation: gameEnter 0.45s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+        }
+        @keyframes gameEnter {
+            0% {
+                transform: scale(0.92) translateY(16px);
+                border-color: #00ffff;
+                box-shadow: 0 0 38px rgba(0, 255, 255, 0.65);
+            }
+            60% {
+                transform: scale(1.02) translateY(-2px);
+                border-color: #12fa05;
+                box-shadow: 0 0 32px rgba(18, 250, 5, 0.45);
+            }
+            100% {
+                transform: scale(1) translateY(0);
+                border-color: #3f3f5a;
+                box-shadow: 0 0 25px rgba(0, 0, 0, 0.8);
+            }
+        }
+        .lane-line {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 1px;
+            background-color: #2d2d3d;
+        }
+        #hit-zone {
+            position: absolute;
+            bottom: 40px;
+            width: 100%;
+            height: 60px;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.03);
+            border-top: 2px solid #444;
+            border-bottom: 2px solid #444;
+        }
+        .receptor {
+            width: 60px;
+            height: 60px;
+            border: 3px solid #666;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: bold;
+            color: #888;
+            transition: transform 0.05s, border-color 0.05s;
+            z-index: 2;
+        }
+        .receptor.active {
+            transform: scale(0.9);
+            background-color: rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+        .lane-0.active { border-color: #c24b99; box-shadow: 0 0 15px #c24b99; }
+        .lane-1.active { border-color: #00ffff; box-shadow: 0 0 15px #00ffff; }
+        .lane-2.active { border-color: #12fa05; box-shadow: 0 0 15px #12fa05; }
+        .lane-3.active { border-color: #f9393f; box-shadow: 0 0 15px #f9393f; }
+
+        .note {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            font-weight: bold;
+            color: #111;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+            z-index: 3;
+        }
+        .note-0 { left: 12px; background-color: #c24b99; }
+        .note-1 { left: 97px; background-color: #00ffff; }
+        .note-2 { left: 182px; background-color: #12fa05; }
+        .note-3 { left: 267px; background-color: #f9393f; }
+
+        .hold-tail {
+            position: absolute;
+            width: 24px;
+            border-radius: 12px 12px 0 0;
+            opacity: 0.72;
+            z-index: 1;
+            pointer-events: none;
+            transition: opacity 0.1s;
+        }
+        .hold-tail.holding {
+            opacity: 1;
+            filter: brightness(1.3);
+            box-shadow: 0 0 14px currentColor;
+        }
+        .tail-0 { left: 30px; background-color: #c24b99; color: #c24b99; }
+        .tail-1 { left: 115px; background-color: #00ffff; color: #00ffff; }
+        .tail-2 { left: 200px; background-color: #12fa05; color: #12fa05; }
+        .tail-3 { left: 285px; background-color: #f9393f; color: #f9393f; }
+
+        .rating-popup {
+            position: absolute;
+            font-size: 34px;
+            font-weight: 900;
+            font-style: italic;
+            letter-spacing: 2px;
+            -webkit-text-stroke: 2px black;
+            text-shadow: 3px 3px 0px #000;
+            pointer-events: none;
+            z-index: 5;
+            animation: fnfPop 0.55s ease-out forwards;
+        }
+
+        @keyframes fnfPop {
+            0% { transform: translateY(0) scale(0.6); opacity: 1; }
+            25% { transform: translateY(-35px) scale(1.15); opacity: 1; }
+            100% { transform: translateY(20px) scale(0.95); opacity: 0; }
+        }
+
+        .overlay-screen {
+            position: absolute;
+            inset: 0;
+            background: rgba(18, 18, 24, 0.94);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+            text-align: center;
+            padding: 20px;
+        }
+
+        #resume-countdown {
+            position: absolute;
+            inset: 0;
+            background: rgba(12, 12, 18, 0.72);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 12;
+            pointer-events: none;
+        }
+        #resume-countdown-num {
+            font-size: 110px;
+            font-weight: 900;
+            color: #12fa05;
+            text-shadow: 0 0 32px rgba(18, 250, 5, 0.8), 5px 5px 0 #000;
+            animation: countdownPulse 0.9s ease-out infinite;
+        }
+        @keyframes countdownPulse {
+            0% { transform: scale(0.75); opacity: 0.4; }
+            35% { transform: scale(1.15); opacity: 1; }
+            100% { transform: scale(0.95); opacity: 0.85; }
+        }
+
+        /* Pełnoekranowy animowany panel powitalny */
+        #welcome-screen {
+            position: fixed;
+            inset: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 40;
+            background: radial-gradient(circle at 50% 45%, #231842 0%, #121218 72%);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        #welcome-screen.welcome-exiting {
+            animation: welcomeExit 0.45s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+            pointer-events: none;
+        }
+        @keyframes welcomeExit {
+            0% {
+                opacity: 1;
+                transform: scale(1);
+                filter: brightness(1);
+            }
+            45% {
+                opacity: 0.9;
+                transform: scale(1.06);
+                filter: brightness(1.45);
+            }
+            100% {
+                opacity: 0;
+                transform: scale(1.14);
+                filter: brightness(1.8);
+            }
+        }
+        .welcome-version {
+            position: fixed;
+            top: 18px;
+            right: 22px;
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 0.6px;
+            color: #b8b8d4;
+            background: rgba(30, 30, 42, 0.78);
+            border: 1px solid #3f3f5a;
+            padding: 6px 12px;
+            border-radius: 6px;
+            z-index: 3;
+            pointer-events: none;
+        }
+        .welcome-grid {
+            position: absolute;
+            inset: -100px;
+            background-image:
+                linear-gradient(rgba(0, 255, 255, 0.08) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 0, 127, 0.08) 1px, transparent 1px);
+            background-size: 48px 48px;
+            animation: gridDrift 12s linear infinite;
+            pointer-events: none;
+        }
+        @keyframes gridDrift {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(48px, 48px); }
+        }
+        .floating-arrow {
+            position: absolute;
+            bottom: -70px;
+            font-size: 36px;
+            font-weight: 900;
+            opacity: 0.25;
+            pointer-events: none;
+            animation: floatUp linear infinite;
+        }
+        @keyframes floatUp {
+            0% {
+                transform: translateY(0) rotate(-10deg) scale(0.9);
+                opacity: 0;
+            }
+            15% { opacity: 0.32; }
+            85% { opacity: 0.32; }
+            100% {
+                transform: translateY(-115vh) rotate(12deg) scale(1.1);
+                opacity: 0;
+            }
+        }
+        .welcome-content {
+            position: relative;
+            z-index: 2;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            padding: 24px;
+        }
+        .welcome-title {
+            font-size: 96px;
+            font-weight: 900;
+            letter-spacing: 12px;
+            margin: 0;
+            color: #00ffff;
+            text-shadow: 0 0 30px rgba(0, 255, 255, 0.65), 6px 6px 0px #ff007f;
+            animation: titlePulse 1.8s ease-in-out infinite;
+        }
+        @keyframes titlePulse {
+            0%, 100% { transform: scale(1) rotate(-1deg); }
+            50% { transform: scale(1.05) rotate(1deg); }
+        }
+        .welcome-subtitle {
+            margin-top: 12px;
+            font-size: 20px;
+            font-weight: bold;
+            letter-spacing: 2px;
+            color: #e9d5ff;
+            background: rgba(168, 85, 247, 0.2);
+            border: 1px solid #a855f7;
+            padding: 8px 20px;
+            border-radius: 24px;
+            box-shadow: 0 0 18px rgba(168, 85, 247, 0.35);
+        }
+        .welcome-secret-note {
+            margin-top: 14px;
+            font-size: 13px;
+            font-weight: 600;
+            letter-spacing: 0.8px;
+            color: #ffd1ea;
+            opacity: 0.9;
+        }
+        .main-btn {
+            padding: 14px 32px;
+            font-size: 18px;
+            font-weight: bold;
+            background: #12fa05;
+            color: #111;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 22px;
+            transition: transform 0.1s, background 0.15s, box-shadow 0.15s;
+            box-shadow: 0 0 18px rgba(18, 250, 5, 0.35);
+        }
+        .main-btn:hover {
+            background: #3aff2e;
+            transform: scale(1.04);
+        }
+    </style>
+</head>
+<body>
+
+    <div id="unlock-toast"></div>
+
+    <!-- Pełnoekranowy animowany panel powitalny -->
+    <div id="welcome-screen">
+        <div class="welcome-version">Wersja - BetaTestet</div>
+        <div class="welcome-grid"></div>
+        <span class="floating-arrow" style="left: 12%; color: #c24b99; animation-duration: 6.5s; animation-delay: 0s;">←</span>
+        <span class="floating-arrow" style="left: 28%; color: #00ffff; animation-duration: 5.5s; animation-delay: 1.5s;">↓</span>
+        <span class="floating-arrow" style="left: 46%; color: #12fa05; animation-duration: 7s; animation-delay: 0.7s;">↑</span>
+        <span class="floating-arrow" style="left: 65%; color: #f9393f; animation-duration: 6s; animation-delay: 2.2s;">→</span>
+        <span class="floating-arrow" style="left: 82%; color: #ff007f; animation-duration: 5.8s; animation-delay: 1s;">↑</span>
+        <span class="floating-arrow" style="left: 92%; color: #00ffff; animation-duration: 7.2s; animation-delay: 2.8s;">←</span>
+
+        <div class="welcome-content">
+            <h1 class="welcome-title">FNF</h1>
+            <div class="welcome-subtitle">zrobione przez AI</div>
+            <div class="welcome-secret-note">są tu secret kody</div>
+            <button id="welcome-btn" class="main-btn">DALEJ</button>
+        </div>
+    </div>
+
+    <div id="hud">
+        <div>CZAS: <span id="timer">0:00 / 1:00</span></div>
+        <div>PKT: <span id="score">0</span></div>
+        <div>COMBO: <span id="combo">0</span></div>
+        <div>MISS: <span id="misses">0 / INF</span></div>
+    </div>
+
+    <div id="game-wrapper">
+        <!-- Panel z keybindami -->
+        <div id="keybinds-panel">
+            <h3>KEYBINDY</h3>
+            <div class="kb-row">
+                <span class="kb-arrow" style="color: #c24b99;">←</span>
+                <span class="kb-keys">D / ←</span>
+            </div>
+            <div class="kb-row">
+                <span class="kb-arrow" style="color: #00ffff;">↓</span>
+                <span class="kb-keys">F / ↓</span>
+            </div>
+            <div class="kb-row">
+                <span class="kb-arrow" style="color: #12fa05;">↑</span>
+                <span class="kb-keys">J / ↑</span>
+            </div>
+            <div class="kb-row">
+                <span class="kb-arrow" style="color: #f9393f;">→</span>
+                <span class="kb-keys">K / →</span>
+            </div>
+            <div class="kb-space">
+                Pauza:<br>
+                <span>SPACJA</span>
+            </div>
+        </div>
+
+        <!-- Stałe powiadomienie po boku o zwiększonych hitboxach -->
+        <div id="hitbox-status-panel">
+            <div class="hitbox-status-title">HITBOXY ZOSTAŁY ZWIĘKSZONE</div>
+            <div class="hitbox-status-sub">Zasięg trafienia: +35%</div>
+        </div>
+
+        <!-- Okno gry -->
+        <div id="game-container">
+            <div class="lane-line" style="left: 85px;"></div>
+            <div class="lane-line" style="left: 170px;"></div>
+            <div class="lane-line" style="left: 255px;"></div>
+
+            <div id="hit-zone">
+                <div class="receptor lane-0" id="rec-0">←</div>
+                <div class="receptor lane-1" id="rec-1">↓</div>
+                <div class="receptor lane-2" id="rec-2">↑</div>
+                <div class="receptor lane-3" id="rec-3">→</div>
+            </div>
+
+            <div id="resume-countdown">
+                <span id="resume-countdown-num">3</span>
+            </div>
+
+            <div id="start-screen" class="overlay-screen">
+                <h2>MINI FNF</h2>
+                <p>Poziom: <b id="start-diff-text" style="color: #00ffff;">NORMALNY</b> | Prędkość: <b id="start-speed-text">15</b><br>Max Miss: <b id="start-max-miss-text" style="color: #ff2a55;">INF</b> | Czas: <b>1:00</b></p>
+                <div class="diff-buttons" id="start-diff-grid" style="width: 240px;">
+                    <button class="diff-btn" data-diff="easy">ŁATWY</button>
+                    <button class="diff-btn active" data-diff="normal">NORMALNY</button>
+                    <button class="diff-btn" data-diff="hard">TRUDNY</button>
+                    <button class="diff-btn" data-diff="nightmare">NIGHTMARE</button>
+                </div>
+                <button id="start-btn" class="main-btn">START</button>
+            </div>
+
+            <div id="pause-screen" class="overlay-screen" style="display: none;">
+                <h2>PAUZA</h2>
+                <p>Wciśnij <b>SPACJĘ</b>, aby wznowić</p>
+                <button id="resume-btn" class="main-btn">WZNÓW</button>
+            </div>
+
+            <div id="end-screen" class="overlay-screen" style="display: none;">
+                <h2 id="end-title">KONIEC PIOSENKI!</h2>
+                <p id="final-stats" style="font-size: 18px; line-height: 1.6;"></p>
+                <button id="restart-btn" class="main-btn">ZAGRAJ PONOWNIE</button>
+            </div>
+        </div>
+
+        <!-- Panel trudności, prędkości, max miss i bota -->
+        <div id="speed-panel">
+            <h3>TRUDNOŚĆ</h3>
+            <div class="diff-buttons" id="panel-diff-grid">
+                <button class="diff-btn" data-diff="easy">ŁATWY</button>
+                <button class="diff-btn active" data-diff="normal">NORMAL</button>
+                <button class="diff-btn" data-diff="hard">TRUDNY</button>
+                <button class="diff-btn" data-diff="nightmare">NIGHTMARE</button>
+            </div>
+
+            <h3 style="margin-top: 14px;">PRĘDKOŚĆ</h3>
+            <div class="speed-controls">
+                <button class="speed-btn" id="speed-down">-</button>
+                <span id="speed-display">15</span>
+                <button class="speed-btn" id="speed-up">+</button>
+            </div>
+            <input type="range" id="speed-slider" min="10" max="25" value="15">
+            <div class="speed-range-labels" id="speed-labels">
+                <span>10</span>
+                <span>15</span>
+                <span>20</span>
+                <span>25</span>
+            </div>
+            <div id="speed-lock-notice">MAX SPEED: 25 (NIE DO ZMIANY)</div>
+
+            <h3 style="margin-top: 14px;">MAX MISS</h3>
+            <span id="max-miss-display">INF</span>
+            <input type="range" id="max-miss-slider" min="1" max="11" value="11">
+            <div class="speed-range-labels">
+                <span>1</span>
+                <span>5</span>
+                <span>10</span>
+                <span>INF</span>
+            </div>
+
+            <div id="bot-box">
+                <h3>AUTOBOT</h3>
+                <button id="bot-toggle-btn">BOT: WYŁ.</button>
+                <div class="bot-hint">Skrót: <b>B</b></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const STORAGE_KEY = 'mini_fnf_session_state_v1';
+
+        function isPageReload() {
+            try {
+                const navEntries = performance.getEntriesByType && performance.getEntriesByType('navigation');
+                if (navEntries && navEntries.length > 0 && navEntries[0].type === 'reload') {
+                    return true;
+                }
+                return performance.navigation && performance.navigation.type === 1;
+            } catch (_) {
+                return false;
+            }
+        }
+
+        function loadPersistedState() {
+            try {
+                if (isPageReload()) {
+                    sessionStorage.removeItem(STORAGE_KEY);
+                    return {};
+                }
+                const raw = sessionStorage.getItem(STORAGE_KEY);
+                return raw ? JSON.parse(raw) : {};
+            } catch (_) {
+                return {};
+            }
+        }
+
+        const persisted = loadPersistedState();
+
+        function savePersistedState() {
+            try {
+                sessionStorage.setItem(STORAGE_KEY, JSON.stringify({
+                    welcomeSeen: !isWelcome,
+                    impossibleUnlocked,
+                    impossibleSpeedUnlocked,
+                    speedRange1to40Unlocked,
+                    botUnlocked,
+                    botEnabled,
+                    hitboxBoostUnlocked,
+                    currentDiffKey,
+                    currentSpeed,
+                    maxMissLimit
+                }));
+            } catch (_) {}
+        }
+
+        const container = document.getElementById('game-container');
+        const timerEl = document.getElementById('timer');
+        const scoreEl = document.getElementById('score');
+        const comboEl = document.getElementById('combo');
+        const missesEl = document.getElementById('misses');
+        const welcomeScreen = document.getElementById('welcome-screen');
+        const welcomeBtn = document.getElementById('welcome-btn');
+        const startBtn = document.getElementById('start-btn');
+        const restartBtn = document.getElementById('restart-btn');
+        const resumeBtn = document.getElementById('resume-btn');
+        const pauseScreen = document.getElementById('pause-screen');
+        const resumeCountdownEl = document.getElementById('resume-countdown');
+        const resumeCountdownNum = document.getElementById('resume-countdown-num');
+        const startScreen = document.getElementById('start-screen');
+        const endScreen = document.getElementById('end-screen');
+        const endTitle = document.getElementById('end-title');
+        const unlockToast = document.getElementById('unlock-toast');
+        const hitboxStatusPanel = document.getElementById('hitbox-status-panel');
+
+        const speedSlider = document.getElementById('speed-slider');
+        const speedDisplay = document.getElementById('speed-display');
+        const startSpeedText = document.getElementById('start-speed-text');
+        const startDiffText = document.getElementById('start-diff-text');
+        const speedDownBtn = document.getElementById('speed-down');
+        const speedUpBtn = document.getElementById('speed-up');
+        const speedLabels = document.getElementById('speed-labels');
+        const speedLockNotice = document.getElementById('speed-lock-notice');
+        const startDiffGrid = document.getElementById('start-diff-grid');
+        const panelDiffGrid = document.getElementById('panel-diff-grid');
+
+        const maxMissSlider = document.getElementById('max-miss-slider');
+        const maxMissDisplay = document.getElementById('max-miss-display');
+        const startMaxMissText = document.getElementById('start-max-miss-text');
+
+        const botBox = document.getElementById('bot-box');
+        const botToggleBtn = document.getElementById('bot-toggle-btn');
+
+        const DIFFICULTIES = {
+            easy: {
+                label: 'ŁATWY',
+                color: '#12fa05',
+                bpm: 115,
+                chance: 0.45,
+                defaultSpeed: 11,
+                doubleChance: 0,
+                holdChance: 0.10,
+                lockedSpeed: false
+            },
+            normal: {
+                label: 'NORMALNY',
+                color: '#00ffff',
+                bpm: 150,
+                chance: 0.70,
+                defaultSpeed: 15,
+                doubleChance: 0.05,
+                holdChance: 0.10,
+                lockedSpeed: false
+            },
+            hard: {
+                label: 'TRUDNY',
+                color: '#f1c40f',
+                bpm: 180,
+                chance: 0.85,
+                defaultSpeed: 19,
+                doubleChance: 0.18,
+                holdChance: 0.10,
+                lockedSpeed: false
+            },
+            nightmare: {
+                label: 'NIGHTMARE',
+                color: '#ff2a55',
+                bpm: 215,
+                chance: 0.96,
+                defaultSpeed: 24,
+                doubleChance: 0.35,
+                holdChance: 0.10,
+                lockedSpeed: false
+            },
+            impossible: {
+                label: 'IMPOSSIBLE',
+                color: '#ff80bf',
+                bpm: 240,
+                chance: 1.0,
+                defaultSpeed: 25,
+                doubleChance: 0.40,
+                holdChance: 0.10,
+                lockedSpeed: true
+            }
+        };
+
+        let impossibleUnlocked = false;
+        let impossibleSpeedUnlocked = Boolean(persisted.impossibleSpeedUnlocked);
+        let speedRange1to40Unlocked = false;
+        let botUnlocked = false;
+        let botEnabled = Boolean(persisted.botEnabled);
+        let botHoldingNote = [null, null, null, null];
+        let hitboxBoostUnlocked = false;
+
+        let maxMissLimit = (typeof persisted.maxMissLimit === 'number' && persisted.maxMissLimit >= 1 && persisted.maxMissLimit <= 10)
+            ? persisted.maxMissLimit
+            : null;
+        let numpadBuffer = '';
+        let wordBuffer = '';
+        const SECRET_IMPOSSIBLE_CODE = '2137';
+        const SECRET_SPEED_CODE = '69';
+        const SECRET_RANGE_CODE = '45';
+        const SECRET_BOT_CODE = '08';
+        const SECRET_HITBOX_WORD = 'cos';
+        let toastTimeout = null;
+
+        let currentDiffKey = persisted.currentDiffKey && DIFFICULTIES[persisted.currentDiffKey] ? persisted.currentDiffKey : 'normal';
+        let currentSpeed = typeof persisted.currentSpeed === 'number' ? persisted.currentSpeed : DIFFICULTIES.normal.defaultSpeed;
+        const SONG_DURATION = 60;
+
+        let score = 0;
+        let combo = 0;
+        let maxCombo = 0;
+        let misses = 0;
+        let elapsedSeconds = 0;
+        let notes = [];
+        let laneBlockedUntil = [0, 0, 0, 0];
+        let heldLanes = [false, false, false, false];
+        let isWelcome = !Boolean(persisted.welcomeSeen);
+        let isWelcomeExiting = false;
+        let isPlaying = false;
+        let isPaused = false;
+        let isResumingCountdown = false;
+        let resumeCountdownInterval = null;
+        let isGameOver = false;
+        let audioCtx;
+        let musicInterval;
+        let timerInterval;
+        let frameCount = 0;
+
+        if (!isWelcome) {
+            welcomeScreen.style.display = 'none';
+        }
+
+        const HIT_Y = 450;
+        const SYMBOLS = ['←', '↓', '↑', '→'];
+        const FREQUENCIES = [261.63, 293.66, 329.63, 392.00, 440.00, 523.25];
+
+        function normalizePolishChar(ch) {
+            return ch
+                .toLowerCase()
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '')
+                .replace(/ł/g, 'l');
+        }
+
+        function getHitboxMultiplier() {
+            return hitboxBoostUnlocked ? 1.35 : 1.0;
+        }
+
+        function getHitWindow() {
+            return 95 * getHitboxMultiplier();
+        }
+
+        function getHoldReleaseTolerance() {
+            return 45 * getHitboxMultiplier();
+        }
+
+        function unlockHitboxBoost(silent = false) {
+            const wasUnlocked = hitboxBoostUnlocked;
+            hitboxBoostUnlocked = true;
+            hitboxStatusPanel.style.display = 'block';
+            savePersistedState();
+
+            if (!wasUnlocked && !silent) {
+                showToast(
+                    'ODBLOKOWANO ZWIĘKSZONE HITBOXY (+35%)!<br><span style="color:#ffffff;font-size:13px;">HITBOXY ZOSTAŁY ZWIĘKSZONE</span>',
+                    '#12fa05',
+                    '#12fa05'
+                );
+            }
+        }
+
+        function dismissWelcome() {
+            if (!isWelcome || isWelcomeExiting) return;
+            isWelcomeExiting = true;
+            savePersistedState();
+            welcomeScreen.classList.add('welcome-exiting');
+            setTimeout(() => {
+                isWelcome = false;
+                isWelcomeExiting = false;
+                welcomeScreen.style.display = 'none';
+                welcomeScreen.classList.remove('welcome-exiting');
+                savePersistedState();
+            }, 450);
+        }
+
+        welcomeBtn.addEventListener('click', (e) => {
+            dismissWelcome();
+            e.target.blur();
+        });
+
+        function syncMaxMissLock() {
+            maxMissSlider.disabled = isPlaying;
+        }
+
+        function updateMissHud() {
+            const limitLabel = maxMissLimit === null ? 'INF' : maxMissLimit;
+            missesEl.innerText = `${misses} / ${limitLabel}`;
+            maxMissDisplay.innerText = limitLabel;
+            startMaxMissText.innerText = limitLabel;
+            maxMissSlider.value = maxMissLimit === null ? 11 : Math.max(1, maxMissLimit);
+        }
+
+        function setMaxMissSlider(val) {
+            if (isPlaying) {
+                maxMissSlider.value = maxMissLimit === null ? 11 : Math.max(1, maxMissLimit);
+                return;
+            }
+            const num = Math.max(1, parseInt(val));
+            maxMissLimit = num >= 11 ? null : num;
+            updateMissHud();
+            savePersistedState();
+        }
+
+        maxMissSlider.addEventListener('input', (e) => {
+            setMaxMissSlider(e.target.value);
+            e.target.blur();
+        });
+
+        updateMissHud();
+        syncMaxMissLock();
+
+        function syncBotButton() {
+            if (!botUnlocked) return;
+            botBox.style.display = 'block';
+            if (botEnabled) {
+                botToggleBtn.innerText = 'BOT: WŁ.';
+                botToggleBtn.classList.add('bot-on');
+            } else {
+                botToggleBtn.innerText = 'BOT: WYŁ.';
+                botToggleBtn.classList.remove('bot-on');
+                for (let l = 0; l < 4; l++) {
+                    if (botHoldingNote[l]) {
+                        releaseBotLane(l);
+                    }
+                }
+            }
+        }
+
+        function toggleBotState(notify = false) {
+            if (!botUnlocked) return;
+            botEnabled = !botEnabled;
+            syncBotButton();
+            savePersistedState();
+            if (notify) {
+                showToast(
+                    botEnabled ? 'AUTOBOT WŁĄCZONY (B)' : 'AUTOBOT WYŁĄCZONY (B)',
+                    botEnabled ? '#00ffff' : '#aaaaaa',
+                    botEnabled ? '#00ffff' : '#dddddd'
+                );
+            }
+        }
+
+        function unlockBot(silent = false) {
+            if (!botUnlocked) {
+                botUnlocked = true;
+                if (!silent) botEnabled = true;
+                syncBotButton();
+                savePersistedState();
+                if (!silent) {
+                    showToast(
+                        'ODBLOKOWANO AUTOBOTA (KOD 08)!<br><span style="color:#ffffff;font-size:13px;">PRZEŁĄCZNIK W PANELU ORAZ POD KLAWISZEM B</span>',
+                        '#00ffff',
+                        '#00ffff'
+                    );
+                }
+            } else if (!silent) {
+                toggleBotState(true);
+            }
+        }
+
+        botToggleBtn.addEventListener('click', (e) => {
+            toggleBotState(false);
+            e.target.blur();
+        });
+
+        function getMinSpeed() {
+            return speedRange1to40Unlocked ? 1 : 10;
+        }
+
+        function getMaxSpeed() {
+            return speedRange1to40Unlocked ? 40 : 25;
+        }
+
+        function showToast(htmlContent, borderColor = '#ff007f', textColor = '#ff80bf') {
+            if (toastTimeout) clearTimeout(toastTimeout);
+            unlockToast.innerHTML = htmlContent;
+            unlockToast.style.borderColor = borderColor;
+            unlockToast.style.color = textColor;
+            unlockToast.style.boxShadow = `0 0 25px ${borderColor}99`;
+            unlockToast.style.display = 'block';
+            toastTimeout = setTimeout(() => {
+                unlockToast.style.display = 'none';
+            }, 4000);
+        }
+
+        function isSpeedCurrentlyLocked() {
+            if (isPlaying) return true;
+            const cfg = DIFFICULTIES[currentDiffKey];
+            return Boolean(cfg && cfg.lockedSpeed && !impossibleSpeedUnlocked);
+        }
+
+        function updateSpeed(newVal, persist = true) {
+            if (isPlaying) {
+                speedSlider.value = currentSpeed;
+                return;
+            }
+            const cfg = DIFFICULTIES[currentDiffKey];
+            if (cfg && cfg.lockedSpeed && !impossibleSpeedUnlocked) {
+                currentSpeed = 25;
+            } else {
+                currentSpeed = Math.min(getMaxSpeed(), Math.max(getMinSpeed(), parseInt(newVal)));
+            }
+            speedSlider.value = currentSpeed;
+            speedDisplay.innerText = currentSpeed;
+            startSpeedText.innerText = currentSpeed;
+            if (persist) savePersistedState();
+        }
+
+        function syncSpeedLock() {
+            const cfg = DIFFICULTIES[currentDiffKey];
+            const isImpossible = Boolean(cfg && cfg.lockedSpeed);
+            const isLocked = isSpeedCurrentlyLocked();
+
+            speedSlider.disabled = isLocked;
+            speedDownBtn.disabled = isLocked;
+            speedUpBtn.disabled = isLocked;
+
+            if (isImpossible) {
+                speedLockNotice.style.display = 'block';
+                if (impossibleSpeedUnlocked) {
+                    speedLockNotice.innerText = isPlaying
+                        ? 'ZABLOKOWANE PODCZAS GRY'
+                        : 'ZMIANA PRĘDKOŚCI ODBLOKOWANA!';
+                    speedLockNotice.classList.add('unlocked');
+                } else {
+                    speedLockNotice.innerText = 'MAX SPEED: 25 (NIE DO ZMIANY)';
+                    speedLockNotice.classList.remove('unlocked');
+                }
+            } else {
+                speedLockNotice.style.display = 'none';
+            }
+        }
+
+        function unlockSpeedRange1to40(silent = false) {
+            const wasUnlocked = speedRange1to40Unlocked;
+            speedRange1to40Unlocked = true;
+
+            speedSlider.min = 1;
+            speedSlider.max = 40;
+            speedLabels.innerHTML = '<span>1</span><span>15</span><span>30</span><span>40</span>';
+            updateSpeed(currentSpeed, false);
+            savePersistedState();
+
+            if (!wasUnlocked && !silent) {
+                showToast(
+                    'ODBLOKOWANO ZAKRES PRĘDKOŚCI: 1 – 40!<br><span style="color:#ffffff;font-size:13px;">PRZEDŁUŻONE STRZAŁKI ZMNIEJSZONE DO 10% (8–12%)</span>',
+                    '#00ffff',
+                    '#00ffff'
+                );
+            }
+        }
+
+        function setDifficulty(diffKey, keepSpeed = false) {
+            if (!DIFFICULTIES[diffKey]) return;
+            if (diffKey === 'impossible' && !impossibleUnlocked) return;
+
+            currentDiffKey = diffKey;
+            const cfg = DIFFICULTIES[diffKey];
+
+            document.querySelectorAll('.diff-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.diff === diffKey);
+            });
+
+            startDiffText.innerText = cfg.label;
+            startDiffText.style.color = cfg.color;
+            syncSpeedLock();
+            updateSpeed(keepSpeed ? currentSpeed : cfg.defaultSpeed);
+        }
+
+        function bindDiffButtons() {
+            document.querySelectorAll('.diff-btn').forEach(btn => {
+                btn.onclick = (e) => {
+                    setDifficulty(e.target.dataset.diff);
+                    e.target.blur();
+                };
+            });
+        }
+
+        function unlockImpossibleMode(silent = false, autoSelect = true) {
+            if (!impossibleUnlocked) {
+                impossibleUnlocked = true;
+
+                [startDiffGrid, panelDiffGrid].forEach(grid => {
+                    const btn = document.createElement('button');
+                    btn.className = 'diff-btn';
+                    btn.dataset.diff = 'impossible';
+                    btn.innerText = 'IMPOSSIBLE';
+                    grid.appendChild(btn);
+                });
+
+                bindDiffButtons();
+            }
+
+            if (autoSelect) {
+                setDifficulty('impossible', silent);
+            } else {
+                syncSpeedLock();
+                updateSpeed(currentSpeed, false);
+            }
+            savePersistedState();
+
+            if (!silent) {
+                if (impossibleSpeedUnlocked) {
+                    showToast('ODBLOKOWANO TRYB: IMPOSSIBLE!<br><span style="color:#ffffff;font-size:13px;">ZMIANA PRĘDKOŚCI JUŻ ODBLOKOWANA!</span>');
+                } else {
+                    showToast('ODBLOKOWANO TRYB: IMPOSSIBLE!<br><span style="color:#ffffff;font-size:13px;">MAX SPEED TO 25 — NIE DA SIĘ GO ZMIENIĆ!</span>');
+                }
+            }
+        }
+
+        function unlockImpossibleSpeed(silent = false) {
+            const wasUnlocked = impossibleSpeedUnlocked;
+            impossibleSpeedUnlocked = true;
+            syncSpeedLock();
+            updateSpeed(currentSpeed, false);
+            savePersistedState();
+
+            if (!wasUnlocked && !silent) {
+                showToast(
+                    'ODBLOKOWANO ZMIANĘ PRĘDKOŚCI!<br><span style="color:#ffffff;font-size:13px;">MOŻESZ TERAZ ZMIENIAĆ SPEED W TRYBIE IMPOSSIBLE!</span>',
+                    '#12fa05',
+                    '#12fa05'
+                );
+            }
+        }
+
+        function resetAllCodes() {
+            for (let l = 0; l < 4; l++) {
+                if (botHoldingNote[l]) {
+                    releaseBotLane(l);
+                }
+                botHoldingNote[l] = null;
+            }
+
+            impossibleUnlocked = false;
+            impossibleSpeedUnlocked = false;
+            speedRange1to40Unlocked = false;
+            botUnlocked = false;
+            botEnabled = false;
+            hitboxBoostUnlocked = false;
+            numpadBuffer = '';
+            wordBuffer = '';
+
+            document.querySelectorAll('.diff-btn[data-diff="impossible"]').forEach(btn => btn.remove());
+            botBox.style.display = 'none';
+            botToggleBtn.classList.remove('bot-on');
+            botToggleBtn.innerText = 'BOT: WYŁ.';
+            hitboxStatusPanel.style.display = 'none';
+
+            speedSlider.min = 10;
+            speedSlider.max = 25;
+            speedLabels.innerHTML = '<span>10</span><span>15</span><span>20</span><span>25</span>';
+
+            const fallbackDiff = currentDiffKey === 'impossible' ? 'normal' : currentDiffKey;
+            setDifficulty(fallbackDiff, false);
+            savePersistedState();
+
+            showToast(
+                'ZRESETOWANO WSZYSTKIE KODY (X)!<br><span style="color:#ffffff;font-size:13px;">ODBLOKOWANIA I BONUSY ZOSTAŁY USUNIĘTE</span>',
+                '#f1c40f',
+                '#f1c40f'
+            );
+        }
+
+        bindDiffButtons();
+
+        if (persisted.speedRange1to40Unlocked) {
+            unlockSpeedRange1to40(true);
+        }
+        if (persisted.impossibleUnlocked) {
+            unlockImpossibleMode(true, currentDiffKey === 'impossible');
+        }
+        if (currentDiffKey !== 'impossible') {
+            setDifficulty(currentDiffKey, true);
+        } else {
+            syncSpeedLock();
+            updateSpeed(currentSpeed, false);
+        }
+        if (persisted.botUnlocked) {
+            unlockBot(true);
+        }
+        if (persisted.hitboxBoostUnlocked) {
+            unlockHitboxBoost(true);
+        }
+
+        speedSlider.addEventListener('input', (e) => {
+            if (isPlaying) {
+                e.target.value = currentSpeed;
+                return;
+            }
+            updateSpeed(e.target.value);
+            e.target.blur();
+        });
+
+        speedDownBtn.addEventListener('click', (e) => {
+            if (!isPlaying) updateSpeed(currentSpeed - 1);
+            e.target.blur();
+        });
+
+        speedUpBtn.addEventListener('click', (e) => {
+            if (!isPlaying) updateSpeed(currentSpeed + 1);
+            e.target.blur();
+        });
+
+        function formatTime(sec) {
+            const m = Math.floor(sec / 60);
+            const s = sec % 60;
+            return `${m}:${s < 10 ? '0' : ''}${s}`;
+        }
+
+        timerEl.innerText = `0:00 / ${formatTime(SONG_DURATION)}`;
+
+        function playTone(freq, duration = 0.15, type = 'square', vol = 0.1) {
+            if (!audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = type;
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + duration);
+        }
+
+        function startMusicGenerator() {
+            clearInterval(musicInterval);
+            const cfg = DIFFICULTIES[currentDiffKey];
+            let step = 0;
+            const stepTime = (60 / cfg.bpm / 2) * 1000;
+
+            musicInterval = setInterval(() => {
+                if (!isPlaying || isPaused) return;
+                if (elapsedSeconds >= SONG_DURATION - 2) return;
+
+                const now = Date.now();
+                if (step % 2 === 0) playTone(130.81, 0.1, 'triangle');
+
+                if (Math.random() < cfg.chance) {
+                    const availableLanes = [0, 1, 2, 3].filter(l => now >= laneBlockedUntil[l]);
+                    if (availableLanes.length > 0) {
+                        const lane = availableLanes[Math.floor(Math.random() * availableLanes.length)];
+                        const freq = FREQUENCIES[lane + (step % 3)];
+                        const isHold = Math.random() < cfg.holdChance;
+                        const holdSteps = isHold ? (2 + Math.floor(Math.random() * 2)) : 0;
+
+                        spawnNote(lane, freq, holdSteps, stepTime);
+
+                        if (isHold) {
+                            laneBlockedUntil[lane] = now + (holdSteps + 1) * stepTime;
+                        } else if (Math.random() < cfg.doubleChance) {
+                            const otherLanes = availableLanes.filter(l => l !== lane);
+                            if (otherLanes.length > 0) {
+                                const secondLane = otherLanes[Math.floor(Math.random() * otherLanes.length)];
+                                const secondFreq = FREQUENCIES[secondLane + ((step + 1) % 3)];
+                                spawnNote(secondLane, secondFreq, 0, stepTime);
+                            }
+                        }
+                    }
+                }
+                step++;
+            }, stepTime);
+        }
+
+        function startTimer() {
+            clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                if (!isPlaying || isPaused) return;
+                elapsedSeconds++;
+                timerEl.innerText = `${formatTime(elapsedSeconds)} / ${formatTime(SONG_DURATION)}`;
+
+                if (elapsedSeconds >= SONG_DURATION) {
+                    endGame(false);
+                }
+            }, 1000);
+        }
+
+        function endGame(failedByMiss = false) {
+            isPlaying = false;
+            isPaused = false;
+            isResumingCountdown = false;
+            clearInterval(resumeCountdownInterval);
+            resumeCountdownEl.style.display = 'none';
+            isGameOver = true;
+            clearInterval(musicInterval);
+            clearInterval(timerInterval);
+            syncSpeedLock();
+            syncMaxMissLock();
+
+            for (let l = 0; l < 4; l++) {
+                botHoldingNote[l] = null;
+                document.getElementById(`rec-${l}`).classList.remove('active');
+            }
+
+            endTitle.innerText = failedByMiss ? 'PRZEGRANA — LIMIT MISS!' : 'KONIEC PIOSENKI!';
+            endTitle.style.color = failedByMiss ? '#ff2a55' : '#ffffff';
+
+            const limitLabel = maxMissLimit === null ? 'INF' : maxMissLimit;
+            document.getElementById('final-stats').innerHTML = `
+                Poziom: <b style="color:${DIFFICULTIES[currentDiffKey].color}">${DIFFICULTIES[currentDiffKey].label}</b><br>
+                Wynik: <b>${score} pkt</b><br>
+                Najwyższe Combo: <b>${maxCombo}</b><br>
+                Pudła (Miss): <b>${misses} / ${limitLabel}</b>
+            `;
+            endScreen.style.display = 'flex';
+        }
+
+        function clearActiveBoard() {
+            for (let n of notes) {
+                if (n.el) n.el.remove();
+                if (n.tailEl) n.tailEl.remove();
+            }
+            notes = [];
+            laneBlockedUntil = [0, 0, 0, 0];
+            heldLanes = [false, false, false, false];
+            botHoldingNote = [null, null, null, null];
+            for (let l = 0; l < 4; l++) {
+                document.getElementById(`rec-${l}`).classList.remove('active');
+            }
+            container.querySelectorAll('.rating-popup').forEach(p => p.remove());
+        }
+
+        function spawnNote(lane, freq, holdSteps = 0, stepTime = 200) {
+            const framesPerStep = (stepTime / 1000) * 60;
+            const holdLength = holdSteps > 0 ? Math.round(holdSteps * framesPerStep * currentSpeed) : 0;
+
+            let tailEl = null;
+            if (holdLength > 0) {
+                tailEl = document.createElement('div');
+                tailEl.className = `hold-tail tail-${lane}`;
+                tailEl.style.height = holdLength + 'px';
+                tailEl.style.top = (-60 - holdLength + 30) + 'px';
+                container.appendChild(tailEl);
+            }
+
+            const el = document.createElement('div');
+            el.className = `note note-${lane}`;
+            el.innerText = SYMBOLS[lane];
+            el.style.top = '-60px';
+            container.appendChild(el);
+
+            notes.push({
+                el,
+                tailEl,
+                lane,
+                y: -60,
+                freq,
+                hit: false,
+                isHold: holdLength > 0,
+                holdLength: holdLength,
+                remainingHold: holdLength,
+                isHolding: false,
+                completed: false
+            });
+        }
+
+        function spawnRating(text, color) {
+            const popup = document.createElement('div');
+            popup.className = 'rating-popup';
+            popup.innerText = text;
+            popup.style.color = color;
+
+            const randomX = 90 + Math.floor(Math.random() * 80);
+            const randomY = 220 + Math.floor(Math.random() * 40);
+            popup.style.left = randomX + 'px';
+            popup.style.top = randomY + 'px';
+
+            container.appendChild(popup);
+            setTimeout(() => popup.remove(), 550);
+        }
+
+        function registerMiss() {
+            combo = 0;
+            misses++;
+            comboEl.innerText = combo;
+            updateMissHud();
+            score = Math.max(0, score - 50);
+            scoreEl.innerText = score;
+            spawnRating('MISS', '#9b59b6');
+            playTone(95, 0.2, 'sawtooth');
+
+            if (maxMissLimit !== null && misses >= maxMissLimit) {
+                endGame(true);
+            }
+        }
+
+        function hitNoteInLane(lane, noteObj, diff) {
+            noteObj.hit = true;
+            playTone(noteObj.freq, 0.2, 'square');
+
+            if (noteObj.isHold) {
+                noteObj.isHolding = true;
+                noteObj.y = HIT_Y;
+                noteObj.el.style.top = HIT_Y + 'px';
+                noteObj.tailEl.classList.add('holding');
+            } else {
+                noteObj.el.remove();
+            }
+
+            const mult = getHitboxMultiplier();
+            if (diff <= 40 * mult) {
+                combo++;
+                score += 350;
+                spawnRating('SICK!!', '#00ffff');
+            } else if (diff <= 60 * mult) {
+                combo++;
+                score += 200;
+                spawnRating('GOOD!', '#12fa05');
+            } else if (diff <= 80 * mult) {
+                combo++;
+                score += 100;
+                spawnRating('BAD', '#f1c40f');
+            } else {
+                combo = 0;
+                score += 50;
+                spawnRating('SHIT', '#e67e22');
+            }
+
+            if (combo > maxCombo) maxCombo = combo;
+            scoreEl.innerText = score;
+            comboEl.innerText = combo;
+        }
+
+        function releaseBotLane(lane) {
+            const held = botHoldingNote[lane];
+            botHoldingNote[lane] = null;
+            if (!heldLanes[lane]) {
+                document.getElementById(`rec-${lane}`).classList.remove('active');
+            }
+
+            if (held && held.isHolding && !held.completed) {
+                held.isHolding = false;
+                held.completed = true;
+                score += 100;
+                scoreEl.innerText = score;
+                held.el.remove();
+                if (held.tailEl) held.tailEl.remove();
+                const idx = notes.indexOf(held);
+                if (idx !== -1) notes.splice(idx, 1);
+            }
+        }
+
+        function runBotStep() {
+            if (!botUnlocked || !botEnabled) return;
+
+            for (let lane = 0; lane < 4; lane++) {
+                const activeHold = botHoldingNote[lane];
+                if (activeHold) {
+                    if (!activeHold.isHolding || activeHold.completed || !notes.includes(activeHold)) {
+                        releaseBotLane(lane);
+                    } else {
+                        document.getElementById(`rec-${lane}`).classList.add('active');
+                    }
+                    continue;
+                }
+
+                for (let n of notes) {
+                    if (n.lane === lane && !n.hit && !n.isHolding) {
+                        const diff = Math.abs(n.y - HIT_Y);
+                        if (diff <= currentSpeed * 0.75 + 12 || (n.y >= HIT_Y - 12 && n.y <= HIT_Y + 35)) {
+                            const rec = document.getElementById(`rec-${lane}`);
+                            rec.classList.add('active');
+                            hitNoteInLane(lane, n, Math.min(diff, 35));
+
+                            if (n.isHold) {
+                                botHoldingNote[lane] = n;
+                            } else {
+                                setTimeout(() => {
+                                    if (!heldLanes[lane] && !botHoldingNote[lane]) {
+                                        rec.classList.remove('active');
+                                    }
+                                }, 90);
+                            }
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        function gameLoop() {
+            if (!isPlaying) return;
+
+            if (!isPaused) {
+                frameCount++;
+                const hitWindow = getHitWindow();
+
+                for (let i = notes.length - 1; i >= 0; i--) {
+                    let n = notes[i];
+
+                    if (!n.isHolding) {
+                        n.y += currentSpeed;
+                        n.el.style.top = n.y + 'px';
+
+                        if (n.tailEl) {
+                            n.tailEl.style.top = (n.y - n.holdLength + 30) + 'px';
+                        }
+
+                        if (n.y > HIT_Y + hitWindow && !n.hit) {
+                            n.hit = true;
+                            if (n.tailEl) n.tailEl.style.opacity = '0.25';
+                            registerMiss();
+                            if (!isPlaying) return;
+                        }
+
+                        if (n.y - n.holdLength > 580) {
+                            n.el.remove();
+                            if (n.tailEl) n.tailEl.remove();
+                            notes.splice(i, 1);
+                        }
+                    } else {
+                        n.remainingHold -= currentSpeed;
+
+                        if (frameCount % 5 === 0) {
+                            score += 25;
+                            scoreEl.innerText = score;
+                            playTone(n.freq, 0.08, 'triangle', 0.05);
+                        }
+
+                        if (n.remainingHold > 0) {
+                            n.tailEl.style.height = n.remainingHold + 'px';
+                            n.tailEl.style.top = (HIT_Y - n.remainingHold + 30) + 'px';
+                        } else {
+                            n.completed = true;
+                            score += 150;
+                            scoreEl.innerText = score;
+                            if (botHoldingNote[n.lane] === n) {
+                                botHoldingNote[n.lane] = null;
+                                if (!heldLanes[n.lane]) {
+                                    document.getElementById(`rec-${n.lane}`).classList.remove('active');
+                                }
+                            }
+                            n.el.remove();
+                            n.tailEl.remove();
+                            notes.splice(i, 1);
+                        }
+                    }
+                }
+
+                runBotStep();
+            }
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        const keyMap = {
+            'ArrowLeft': 0, 'KeyD': 0,
+            'ArrowDown': 1, 'KeyF': 1,
+            'ArrowUp': 2, 'KeyJ': 2,
+            'ArrowRight': 3, 'KeyK': 3
+        };
+
+        const numpadMap = {
+            'Numpad0': '0', 'Numpad1': '1', 'Numpad2': '2', 'Numpad3': '3',
+            'Numpad4': '4', 'Numpad5': '5', 'Numpad6': '6', 'Numpad7': '7',
+            'Numpad8': '8', 'Numpad9': '9'
+        };
+
+        document.addEventListener('keydown', (e) => {
+            if (e.repeat) return;
+
+            if (e.code === 'KeyB' || e.key === 'b' || e.key === 'B') {
+                if (botUnlocked) {
+                    e.preventDefault();
+                    toggleBotState(true);
+                }
+                return;
+            }
+
+            if (e.code === 'KeyX' || e.key === 'x' || e.key === 'X') {
+                e.preventDefault();
+                resetAllCodes();
+                return;
+            }
+
+            const digit = numpadMap[e.code] || (/^[0-9]$/.test(e.key) ? e.key : null);
+            if (digit !== null) {
+                numpadBuffer = (numpadBuffer + digit).slice(-4);
+                if (numpadBuffer.endsWith(SECRET_IMPOSSIBLE_CODE)) {
+                    numpadBuffer = '';
+                    unlockImpossibleMode();
+                } else if (numpadBuffer.endsWith(SECRET_SPEED_CODE)) {
+                    numpadBuffer = '';
+                    unlockImpossibleSpeed();
+                } else if (numpadBuffer.endsWith(SECRET_RANGE_CODE)) {
+                    numpadBuffer = '';
+                    unlockSpeedRange1to40();
+                } else if (numpadBuffer.endsWith(SECRET_BOT_CODE)) {
+                    numpadBuffer = '';
+                    unlockBot();
+                }
+            }
+
+            if (typeof e.key === 'string' && e.key.length === 1 && !/^[0-9]$/.test(e.key)) {
+                const cleanChar = normalizePolishChar(e.key);
+                if (/^[a-z]$/.test(cleanChar)) {
+                    wordBuffer = (wordBuffer + cleanChar).slice(-6);
+                    if (wordBuffer.endsWith(SECRET_HITBOX_WORD)) {
+                        wordBuffer = '';
+                        unlockHitboxBoost();
+                    }
+                }
+            }
+
+            if (e.code === 'Space' || e.key === ' ') {
+                e.preventDefault();
+                if (isWelcome) {
+                    dismissWelcome();
+                } else if (!isPlaying && !isGameOver) {
+                    startGame();
+                } else if (isPlaying) {
+                    togglePause();
+                } else if (isGameOver) {
+                    prepareNextRound();
+                }
+                return;
+            }
+
+            if (!isPlaying || isPaused) return;
+            const lane = keyMap[e.code];
+            if (lane === undefined) return;
+
+            heldLanes[lane] = true;
+            document.getElementById(`rec-${lane}`).classList.add('active');
+
+            let hitNote = null;
+            let minDiff = Infinity;
+
+            for (let n of notes) {
+                if (n.lane === lane && !n.hit) {
+                    let diff = Math.abs(n.y - HIT_Y);
+                    if (diff < minDiff) {
+                        minDiff = diff;
+                        hitNote = n;
+                    }
+                }
+            }
+
+            const hitWindow = getHitWindow();
+            if (hitNote && minDiff <= hitWindow) {
+                hitNoteInLane(lane, hitNote, minDiff);
+            } else {
+                registerMiss();
+            }
+        });
+
+        document.addEventListener('keyup', (e) => {
+            const lane = keyMap[e.code];
+            if (lane !== undefined) {
+                heldLanes[lane] = false;
+                if (!botHoldingNote[lane]) {
+                    document.getElementById(`rec-${lane}`).classList.remove('active');
+                }
+
+                const holdTolerance = getHoldReleaseTolerance();
+                for (let i = notes.length - 1; i >= 0; i--) {
+                    let n = notes[i];
+                    if (n.lane === lane && n.isHolding && !n.completed) {
+                        n.isHolding = false;
+                        if (n.remainingHold > holdTolerance) {
+                            if (n.tailEl) n.tailEl.style.opacity = '0.25';
+                            registerMiss();
+                            if (!isPlaying) return;
+                        } else {
+                            n.completed = true;
+                            score += 100;
+                            scoreEl.innerText = score;
+                            n.el.remove();
+                            if (n.tailEl) n.tailEl.remove();
+                            notes.splice(i, 1);
+                        }
+                    }
+                }
+            }
+        });
+
+        function startGame() {
+            if (isPlaying) return;
+            startScreen.style.display = 'none';
+            endScreen.style.display = 'none';
+            container.classList.remove('game-entering');
+            void container.offsetWidth;
+            container.classList.add('game-entering');
+            setTimeout(() => container.classList.remove('game-entering'), 460);
+
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            isPlaying = true;
+            isPaused = false;
+            isResumingCountdown = false;
+            isGameOver = false;
+            syncSpeedLock();
+            syncMaxMissLock();
+            startTimer();
+            startMusicGenerator();
+            gameLoop();
+        }
+
+        function prepareNextRound() {
+            clearInterval(musicInterval);
+            clearInterval(timerInterval);
+            clearInterval(resumeCountdownInterval);
+            resumeCountdownEl.style.display = 'none';
+            clearActiveBoard();
+
+            score = 0;
+            combo = 0;
+            maxCombo = 0;
+            misses = 0;
+            elapsedSeconds = 0;
+            frameCount = 0;
+            isPlaying = false;
+            isPaused = false;
+            isResumingCountdown = false;
+            isGameOver = false;
+
+            scoreEl.innerText = '0';
+            comboEl.innerText = '0';
+            timerEl.innerText = `0:00 / ${formatTime(SONG_DURATION)}`;
+            updateMissHud();
+            syncSpeedLock();
+            syncMaxMissLock();
+
+            endScreen.style.display = 'none';
+            startScreen.style.display = 'flex';
+        }
+
+        function startResumeCountdown() {
+            if (isResumingCountdown || !isPlaying) return;
+            isResumingCountdown = true;
+            isPaused = true;
+            pauseScreen.style.display = 'none';
+
+            let left = 3;
+            resumeCountdownNum.innerText = left;
+            resumeCountdownEl.style.display = 'flex';
+            playTone(440, 0.14, 'sine', 0.12);
+
+            clearInterval(resumeCountdownInterval);
+            resumeCountdownInterval = setInterval(() => {
+                if (!isPlaying) {
+                    clearInterval(resumeCountdownInterval);
+                    isResumingCountdown = false;
+                    resumeCountdownEl.style.display = 'none';
+                    return;
+                }
+
+                left--;
+                if (left > 0) {
+                    resumeCountdownNum.innerText = left;
+                    playTone(440, 0.14, 'sine', 0.12);
+                } else {
+                    clearInterval(resumeCountdownInterval);
+                    isResumingCountdown = false;
+                    resumeCountdownEl.style.display = 'none';
+                    isPaused = false;
+                    playTone(659.25, 0.18, 'triangle', 0.14);
+                }
+            }, 1000);
+        }
+
+        function togglePause() {
+            if (!isPlaying) return;
+            if (isResumingCountdown) return;
+
+            if (!isPaused) {
+                isPaused = true;
+                pauseScreen.style.display = 'flex';
+            } else {
+                startResumeCountdown();
+            }
+        }
+
+        startBtn.addEventListener('click', startGame);
+        resumeBtn.addEventListener('click', () => {
+            if (isPaused && !isResumingCountdown) {
+                startResumeCountdown();
+            }
+        });
+        restartBtn.addEventListener('click', (e) => {
+            prepareNextRound();
+            e.target.blur();
+        });
+    </script>
+</body>
+</html>
